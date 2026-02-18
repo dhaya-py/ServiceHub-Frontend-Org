@@ -1,0 +1,90 @@
+// Authentication utilities
+class Auth {
+    static async login(email, password) {
+        try {
+            const data = await api.post(API_ENDPOINTS.LOGIN, { 
+                email, 
+                password 
+            }, false);
+            
+            api.setToken(data.access_token);
+            const user = await this.getCurrentUser();
+            this.setUser(user);
+            return user;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async register(email, password, role = USER_ROLES.CUSTOMER) {
+        try {
+            const data = await api.post(API_ENDPOINTS.REGISTER, {
+                email,
+                password,
+                role
+            }, false);
+            return data;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async getCurrentUser() {
+        try {
+            const user = await api.get(API_ENDPOINTS.ME);
+            return user;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static logout() {
+        api.removeToken();
+        window.location.href = '/pages/login.html';
+    }
+
+    static isAuthenticated() {
+        return !!api.getToken();
+    }
+
+    static getUser() {
+        const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+        return userStr ? JSON.parse(userStr) : null;
+    }
+
+    static setUser(user) {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    }
+
+    static hasRole(role) {
+        const user = this.getUser();
+        return user && user.role === role;
+    }
+
+    static redirectToDashboard(role) {
+        const dashboardMap = {
+            [USER_ROLES.ADMIN]: '/pages/admin/dashboard.html',
+            [USER_ROLES.PROVIDER]: '/pages/provider/dashboard.html',
+            [USER_ROLES.CUSTOMER]: '/pages/customer/dashboard.html'
+        };
+        window.location.href = dashboardMap[role] || '/pages/customer/dashboard.html';
+    }
+
+    static checkAuth(requiredRole = null) {
+        if (!this.isAuthenticated()) {
+            window.location.href = '/pages/login.html';
+            return false;
+        }
+
+        if (requiredRole) {
+            const user = this.getUser();
+            if (!user || user.role !== requiredRole) {
+                alert('Access denied. Insufficient permissions.');
+                this.redirectToDashboard(user?.role);
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
