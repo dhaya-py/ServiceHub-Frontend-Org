@@ -215,7 +215,7 @@
         async function loadServiceDetails() {
             try {
                 // Load service details
-                currentService = await api.get(API_ENDPOINTS.SERVICE_BY_ID(serviceId));
+                currentService = await api.get(API_ENDPOINTS.SERVICE_BY_ID(serviceId), {}, false);
                 
                 // Update UI
                 document.getElementById('serviceTitle').textContent = currentService.name;

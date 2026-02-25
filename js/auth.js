@@ -2,12 +2,32 @@
 class Auth {
     static async login(email, password) {
         try {
-            const data = await api.post(API_ENDPOINTS.LOGIN, { 
-                email, 
-                password 
-            }, false);
+            // Create form data for OAuth2 login
+            const formData = new URLSearchParams();
+            formData.append('username', email);  // OAuth2 uses 'username' field
+            formData.append('password', password);
             
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.LOGIN}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw {
+                    status: response.status,
+                    message: data.detail || 'Login failed'
+                };
+            }
+            
+            // Store token
             api.setToken(data.access_token);
+            
+            // Get user details
             const user = await this.getCurrentUser();
             this.setUser(user);
             return user;
@@ -16,12 +36,16 @@ class Auth {
         }
     }
 
-    static async register(email, password, role = USER_ROLES.CUSTOMER) {
+    static async register(email, password, role = USER_ROLES.CUSTOMER, name = null) {
         try {
+            // Extract name from email if not provided
+            const userName = name || email.split('@')[0];
+            
             const data = await api.post(API_ENDPOINTS.REGISTER, {
                 email,
                 password,
-                role
+                role,
+                name: userName
             }, false);
             return data;
         } catch (error) {

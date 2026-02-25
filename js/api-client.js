@@ -61,10 +61,10 @@ class APIClient {
         }
     }
 
-    async get(endpoint, params = {}) {
+    async get(endpoint, params = {}, includeAuth = true) {
         const queryString = new URLSearchParams(params).toString();
         const url = queryString ? `${endpoint}?${queryString}` : endpoint;
-        return this.request(url, { method: 'GET' });
+        return this.request(url, { method: 'GET', includeAuth });
     }
 
     async post(endpoint, data = {}, includeAuth = true) {
